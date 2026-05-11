@@ -65,46 +65,71 @@ def start_scraping():
     cursor = conn.cursor()
 
     options = uc.ChromeOptions()
-    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--window-size=1000,800")
+    
+
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    
+    options.add_argument('--blink-settings=imagesEnabled=false')
+    prefs = {
+        "profile.managed_default_content_settings.images": 2, 
+        "profile.managed_default_content_settings.stylesheets": 2
+    }
+    options.add_experimental_option("prefs", prefs)
+
     driver = uc.Chrome(options=options, version_main=147)
 
     try:
-        target_url = "https://www.hepsiemlak.com/satilik"
-        driver.get(target_url)
-        time.sleep(5)
+        ref_links = []
 
-        try:
-            cookie_btn = WebDriverWait(driver, 5).until(
-                EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Tümünü Kabul Et') or contains(text(), 'Kabul Et')]"))
-            )
-            cookie_btn.click()
-            time.sleep(2)
-        except:
-            pass
+        #target_url = "https://www.hepsiemlak.com/satilik"
+        for page in range(1,11):
+            print(f"\n{'='*20} SAYFA {page} İŞLENİYOR {'='*20}")
 
-        print("Daha fazla ilan yüklenmesi için sayfa kaydırılıyor...")
-        for _ in range(3):
-            driver.execute_script("window.scrollBy(0, 1500);")
-            time.sleep(3)
+            if page == 1:
+                target_url = "https://www.hepsiemlak.com/satilik"
+            else:
+                target_url = f"https://www.hepsiemlak.com/satilik?page={page}"
 
-        ilan_linkleri = []
-        tum_linkler = driver.find_elements(By.CSS_SELECTOR, "a")
-        for a in tum_linkler:
-            try:
-                href = a.get_attribute("href")
-                if href and "-satilik" in href and "?" not in href and any(char.isdigit() for char in href):
-                    if len(href) > 40 and href not in ilan_linkleri:
-                        ilan_linkleri.append(href)
-            except:
-                continue
+            driver.get(target_url)
+            time.sleep(4)
 
-        print(f"\nToplam {len(ilan_linkleri)} adet ilan bulundu. Veritabanı aktarımı başlıyor...\n")
-        if len(ilan_linkleri) == 0: return
+            if page == 1:
+                try:
+                    cookie_btn = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Tümünü Kabul Et') or contains(text(), 'Kabul Et')]"))
+                    )
+                    cookie_btn.click()
+                    time.sleep(2)
+                except:
+                    pass
 
-        for url in ilan_linkleri:
+            print(f"Sayfa {page} kaydırılıyor...")
+            for _ in range(3):
+                driver.execute_script("window.scrollBy(0, 1500);")
+                time.sleep(2)
+
+            all_ref = driver.find_elements(By.CSS_SELECTOR, "a")
+            for a in all_ref:
+                try:
+                    href = a.get_attribute("href")
+                    if href and "-satilik" in href and "?" not in href and any(char.isdigit() for char in href):
+                        if len(href) > 40 and href not in ref_links:
+                            ref_links.append(href)
+                except:
+                    continue
+
+            print(f"Sayfa {page} tamamlandı. Toplam link havuzu: {len(ref_links)}")
+
+        print(f"\nToplam {len(ref_links)} adet gerçek ilan bulundu. Veritabanı aktarımı başlıyor...\n")
+        if len(ref_links) == 0: return
+
+        for url in ref_links:
             try:
                 driver.get(url)
-                time.sleep(random.uniform(3, 6))
+                time.sleep(random.uniform(2, 4))
                 
                 listing_id = url.split('/')[-1]
 
@@ -184,7 +209,8 @@ def start_scraping():
                 print(f"BAŞARILI: {listing_id} | {city}/{district} | {price} TL | Kaydedildi.")
 
             except Exception as e:
-                print(f"HATA: {url} işlenirken hata oluştu. Detay: {e}")
+                #print(f"HATA: {url} işlenirken hata oluştu. Detay: {e}")
+                pass
 
     finally:
         driver.quit()
