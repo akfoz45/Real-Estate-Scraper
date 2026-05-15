@@ -57,6 +57,18 @@ def insert_listing(cursor, listing_data):
     """
     cursor.execute(query, listing_data)
 
+def handle_cloudflare(driver):
+    try:
+        time.sleep(2)
+        current_title = driver.title.lower()
+        if "güvenlik" in current_title or "moment" in current_title or "cloudflare" in current_title or "dikkat" in current_title:
+            print("🛡️ Cloudflare Algılandı! İnsan taklidi yapılıyor...")
+            for _ in range(3):
+                driver.execute_script(f"window.scrollBy(0, {random.randint(200, 500)});")
+                time.sleep(random.uniform(2, 4))
+            time.sleep(6) 
+    except:
+        pass
 
 def start_scraping():
     print("Nihai Bot Başlatılıyor: Veriler doğrudan MySQL'e yazılacak...")
@@ -65,18 +77,17 @@ def start_scraping():
     cursor = conn.cursor()
 
     options = uc.ChromeOptions()
-    options.add_argument("--window-size=1000,800")
+    options.add_argument("--window-size=1920,1080")
     
+    options.page_load_strategy = 'normal' 
 
+    """
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
-    
-    options.add_argument('--blink-settings=imagesEnabled=false')
-    prefs = {
-        "profile.managed_default_content_settings.images": 2, 
-        "profile.managed_default_content_settings.stylesheets": 2
-    }
+    """
+
+    prefs = {"profile.default_content_setting_values.notifications": 2}
     options.add_experimental_option("prefs", prefs)
 
     driver = uc.Chrome(options=options, version_main=147)
@@ -85,16 +96,18 @@ def start_scraping():
         ref_links = []
 
         #target_url = "https://www.hepsiemlak.com/satilik"
-        for page in range(1,11):
+        for page in range(1,10):
             print(f"\n{'='*20} SAYFA {page} İŞLENİYOR {'='*20}")
 
             if page == 1:
-                target_url = "https://www.hepsiemlak.com/satilik"
+                target_url = "https://www.hepsiemlak.com/istanbul-satilik"
             else:
-                target_url = f"https://www.hepsiemlak.com/satilik?page={page}"
+                target_url = f"https://www.hepsiemlak.com/istanbul-satilik?page={page}"
 
             driver.get(target_url)
             time.sleep(4)
+
+            handle_cloudflare(driver)
 
             if page == 1:
                 try:
@@ -107,9 +120,9 @@ def start_scraping():
                     pass
 
             print(f"Sayfa {page} kaydırılıyor...")
-            for _ in range(3):
-                driver.execute_script("window.scrollBy(0, 1500);")
-                time.sleep(2)
+            for _ in range(4):
+                driver.execute_script(f"window.scrollBy(0, {random.randint(800, 1200)});")
+                time.sleep(random.uniform(1.5, 3.0))
 
             all_ref = driver.find_elements(By.CSS_SELECTOR, "a")
             for a in all_ref:
@@ -123,17 +136,29 @@ def start_scraping():
 
             print(f"Sayfa {page} tamamlandı. Toplam link havuzu: {len(ref_links)}")
 
-        print(f"\nToplam {len(ref_links)} adet gerçek ilan bulundu. Veritabanı aktarımı başlıyor...\n")
+            time.sleep(random.uniform(3, 6))
+
+        print(f"\nToplam {len(ref_links)} adet İstanbul ilan bulundu. Veritabanı aktarımı başlıyor...\n")
         if len(ref_links) == 0: return
 
         for url in ref_links:
             try:
                 driver.get(url)
                 time.sleep(random.uniform(2, 4))
+
+                handle_cloudflare(driver)
+
+                time.sleep(random.uniform(2, 4))
+                driver.execute_script("window.scrollBy(0, 400);")
+                time.sleep(random.uniform(1, 2))
                 
                 listing_id = url.split('/')[-1]
 
-                title = driver.find_element(By.CSS_SELECTOR, "h1").get_attribute("textContent").strip()
+                try:
+                    title = driver.find_element(By.CSS_SELECTOR, "h1").get_attribute("textContent").strip()
+                except:
+                    continue
+
                 try:
                     price_str = driver.find_element(By.CSS_SELECTOR, ".font-title-1, .price, .fz24-bold").get_attribute("textContent").strip()
                     price = int("".join(filter(str.isdigit, price_str)))
@@ -152,27 +177,27 @@ def start_scraping():
 
                 features = driver.execute_script("""
                     let data = {};
-                    let spans = document.querySelectorAll('li span.txt');
-                    spans.forEach(span => {
-                        let label = span.textContent.trim();
-                        let sibling = span.nextElementSibling;
-                        if (sibling) {
-                            data[label] = sibling.textContent.replace(/\\s+/g, ' ').trim();
+                    let items = document.querySelectorAll('li, .spec-item, .property-item, tr'); 
+                    
+                    items.forEach(item => {
+                        let textContent = item.innerText.split('\\n').map(x => x.trim()).filter(x => x);
+                        
+                        if (textContent.length === 2) {
+                            data[textContent[0]] = textContent[1];
+                        } 
+                        else {
+                            let spans = item.querySelectorAll('span, div');
+                            if(spans.length >= 2) {
+                                 let key = spans[0].innerText.trim();
+                                 let value = spans[1].innerText.trim();
+                                 if(key && value && key !== value) {
+                                     data[key] = value;
+                                 }
+                            }
                         }
                     });
                     return data;
                 """)
-
-                if not features:
-                    features = driver.execute_script("""
-                        let data = {};
-                        let lis = document.querySelectorAll('ul.adv-info-list li, ul.short-info-list li');
-                        lis.forEach(li => {
-                            let lines = li.innerText.split('\\n').map(x => x.trim()).filter(x => x);
-                            if (lines.length >= 2) data[lines[0]] = lines[1];
-                        });
-                        return data;
-                    """)
 
                 def fuzzy_get(search_keys):
                     for k, v in features.items():
@@ -187,14 +212,16 @@ def start_scraping():
                 isinma = fuzzy_get(["Isınma Tipi", "Isıtma"])
                 esya = fuzzy_get(["Eşya Durumu", "Eşyalı"])
 
-                metrekare_str = fuzzy_get(["Brüt / Net", "Brüt M2", "Metrekare", "m2", "m²"])
+                sqm_str = fuzzy_get(["Brüt / Net", "Brüt M2", "Metrekare", "m2", "m²"])
                 gross_sqm, net_sqm = None, None
-                if metrekare_str:
-                    sayilar = [int(s) for s in re.findall(r'\d+', metrekare_str)]
-                    if len(sayilar) >= 2:
-                        gross_sqm, net_sqm = sayilar[0], sayilar[1]
-                    elif len(sayilar) == 1:
-                        gross_sqm, net_sqm = sayilar[0], sayilar[0]
+                if sqm_str:
+                    cleaned_str = sqm_str.lower().replace("m2", "").replace("m²", "").replace("m", "")
+
+                    numbers = [int(s) for s in re.findall(r'\d+', cleaned_str)]
+                    if len(numbers) >= 2:
+                        gross_sqm, net_sqm = numbers[0], numbers[1]
+                    elif len(numbers) == 1:
+                        gross_sqm, net_sqm = numbers[0], numbers[0]
 
                 neighborhood_id = get_or_create_location(cursor, city, district, neighborhood)
 
