@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ev Fiyat Tahmini</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .result { margin-top: 20px; padding: 15px; background-color: #d4edda; color: #155724; border-radius: 5px; font-weight: bold; }
+        input, select, button { width: 100%; margin-top: 5px; margin-bottom: 15px; padding: 8px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; padding: 10px; }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Emlak Fiyat Tahmin Sistemi</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Fiyatı Tahmin Et</button>
+        </form>
+
+        {% if prediction %}
+            <div class="result">
+                Tahmini Ev Fiyatı: {{ prediction }} ₺
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
