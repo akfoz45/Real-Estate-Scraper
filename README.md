@@ -18,7 +18,7 @@ An end-to-end Machine Learning project that predicts real estate prices in Istan
 </p>
 
 <p align="center">
-  <img src="images/2.PNG" alt="Project Web Interface Main Screen 2" width="800">
+  <img src="images/3.PNG" alt="Project Web Interface Main Screen 2" width="800">
 </p>
 
 ---
