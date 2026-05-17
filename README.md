@@ -13,9 +13,13 @@ An end-to-end Machine Learning project that predicts real estate prices in Istan
 
 ## 📸 Screenshots
 
-![Project Web Interface Main Screen 1](images/1.PNG)
+<p align="center">
+  <img src="images/1.PNG" alt="Project Web Interface Main Screen 1" width="800">
+</p>
 
-![Project Web Interface Main Screen 2](images/2.PNG)
+<p align="center">
+  <img src="images/2.PNG" alt="Project Web Interface Main Screen 2" width="800">
+</p>
 
 ---
 
