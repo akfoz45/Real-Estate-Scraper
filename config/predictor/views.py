@@ -1,5 +1,6 @@
 from django.shortcuts import render
 import pandas as pd
+import numpy as np
 from django.apps import apps
 from django.shortcuts import render
 from .forms import HousePriceForm
@@ -18,7 +19,8 @@ def predict_price_view(request):
             model = predictor_app.ml_model
 
             if model:
-                pred_value = model.predict(df)[0]
+                pred_log = model.predict(df)[0]
+                pred_value = np.expm1(pred_log)
                 prediction = round(pred_value, 2)
     else:
         form = HousePriceForm()
