@@ -2,42 +2,112 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Ev Fiyat Tahmini</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İst-Ev Değerleme | AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
-        .result { margin-top: 20px; padding: 15px; background-color: #d4edda; color: #155724; border-radius: 5px; font-weight: bold; }
-        input, select, button { width: 100%; margin-top: 5px; margin-bottom: 15px; padding: 8px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; padding: 10px; }
-        button:hover { background-color: #0056b3; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7f6;
+            color: #2d3436;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #1e3799 0%, #0984e3 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: -50px;
+        }
+        .main-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .btn-predict {
+            background: #00b894;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .btn-predict:hover {
+            background: #00947a;
+            transform: translateY(-2px);
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #636e72;
+        }
+        .result-box {
+            background: #fff;
+            border-left: 8px solid #00b894;
+            border-radius: 15px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Emlak Fiyat Tahmin Sistemi</h2>
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Fiyatı Tahmin Et</button>
-        </form>
 
-        {% if prediction %}
-        <div class="card mt-5 shadow-sm border-0" style="border-radius: 15px; background: linear-gradient(145deg, #ffffff, #f8f9fa);">
-            <div class="card-body text-center p-5">
-                <p class="text-uppercase tracking-wide text-muted mb-2 font-weight-bold" style="letter-spacing: 2px;">
-                    ✨ Yapay Zeka Değerleme Sonucu
-                </p>
-                <h1 class="display-4 font-weight-bold text-success mb-4">
-                    {{ prediction }} ₺
-                </h1>
-                
-                <div class="alert alert-secondary text-left mt-4" role="alert" style="border-left: 5px solid #6c757d; border-radius: 10px;">
-                    <h5 class="alert-heading text-dark">🤖 Model Özeti</h5>
-                    <p class="mb-0 text-dark">{{ ai_comment }}</p>
+<section class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-5 fw-bold">✨ İstanbul Akıllı Ev Değerleme</h1>
+        <p class="lead">Yapay zeka algoritmaları ile saniyeler içinde gerçek piyasa değerini öğrenin.</p>
+    </div>
+</section>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card main-card">
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            {% for field in form %}
+                            <div class="col-md-6">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-5">
+                            <button type="submit" class="btn btn-predict btn-lg text-white w-100">
+                                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Fiyatı Tahmin Et
+                            </button>
+                        </div>
+                    </form>
+
+                    {% if prediction %}
+                    <div class="result-box mt-5 p-4 shadow-sm">
+                        <div class="text-center">
+                            <h5 class="text-muted text-uppercase mb-3" style="letter-spacing: 1px;">Tahmini Piyasa Değeri</h5>
+                            <h2 class="display-4 fw-bold text-success">{{ prediction }} ₺</h2>
+                        </div>
+                        <hr>
+                        <div class="d-flex align-items-start mt-3">
+                            <div class="bg-light p-3 rounded-circle me-3">
+                                <i class="fa-solid fa-robot text-primary fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Yapay Zeka Analizi</h6>
+                                <p class="text-muted small mb-0">{{ ai_comment }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        {% endif %}
     </div>
+</div>
+
+<footer class="text-center py-4 text-muted">
+    <p class="small">&copy; 2024 İstanbul House Price Predictor | Veri Bilimi Projesi</p>
+</footer>
+
 </body>
 </html>
